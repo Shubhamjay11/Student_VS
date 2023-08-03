@@ -2,13 +2,26 @@ import pandas as pd
 import streamlit as st
 from streamlit_option_menu import option_menu
 import Job12  # Import the Job12 module
+import pandas as pd
+import boto3
+import io
+s3 = boto3.client('s3')
+s3 = boto3.resource(
+    service_name='s3',
+    region_name='us-east-2',
+    aws_access_key_id='AKIA4T5JWBQCSPOKA6MX',
+    aws_secret_access_key='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'
+)
 
 # Move the call to st.set_page_config to the beginning of the script
 st.set_page_config(layout="wide")
 
 # Load the Excel file into a pandas DataFrame
-df = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Rode Map.xlsx")
-df.head()
+#df = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Rode Map.xlsx")
+#df.head()
+obj = s3.Bucket('vsdatateamtest1').Object('College.xlsx').get()
+df = pd.read_excel(io.BytesIO(obj['Body'].read()), index_col=0)
+
 
 # Define the Streamlit interface
 def main():
