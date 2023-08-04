@@ -1,28 +1,27 @@
 import pandas as pd
 import streamlit as st
-import boto3
 from streamlit_option_menu import option_menu
 import Job12  # Import the Job12 module
-
-s3 = boto3.client('s3')
-s3 = boto3.resource(
-    service_name='s3',
-    region_name='us-east-2',
-    aws_access_key_id='AKIA4T5JWBQCSPOKA6MX',
-    aws_secret_access_key='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'
-)
-
-import io
 
 # Move the call to st.set_page_config to the beginning of the script
 st.set_page_config(layout="wide")
 
-# Load the Excel file into a pandas DataFrame
-#df = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\College Final.xlsx")
-obj = s3.Bucket('vsdatateamtest1').Object('College.xlsx').get()
-df = pd.read_excel(io.BytesIO(obj['Body'].read()), index_col=0)
-df.head()
+import boto3
+import io
+import pandas as pd
 
+aws_id = 'AKIA4T5JWBQCSPOKA6MX'
+aws_secret = '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'
+bucket_name = 'vsdatateamtest1'
+object_key = 'College.xlsx'
+
+s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
+obj = s3.get_object(Bucket=bucket_name, Key=object_key)
+data = obj['Body'].read()
+df = pd.read_excel(io.BytesIO(data))
+print(df)
+
+df.head()
 
 # Define the Streamlit interface
 def main():
