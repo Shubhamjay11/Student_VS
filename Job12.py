@@ -7,15 +7,9 @@ import base64
 import tempfile
 from PIL import Image
 
-s3 = boto3.client('s3')
-s3 = boto3.resource(
-    service_name='s3',
-    region_name='us-east-2',
-    aws_access_key_id='AKIA4T5JWBQCSPOKA6MX',
-    aws_secret_access_key='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'
-)
-
+import boto3
 import io
+import pandas as pd
 
 
 
@@ -235,8 +229,15 @@ def add_detail(self, detail, separator="\n"):
 #dp = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Job Final.xlsx")
 #dp.head()
 
-obj = s3.Bucket('vsdatateamtest1').Object('Job.xlsx').get()
-dp = pd.read_excel(io.BytesIO(obj['Body'].read()), index_col=0)
+aws_id = 'AKIA4T5JWBQCSPOKA6MX'
+aws_secret = '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'
+bucket_name = 'vsdatateamtest1'
+object_key = 'Job.xlsx'
+
+s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
+obj = s3.get_object(Bucket=bucket_name, Key=object_key)
+data = obj['Body'].read()
+dp = pd.read_excel(io.BytesIO(data))
 
 @st.cache_resource
 def load_job_details(selected_field):
@@ -299,8 +300,13 @@ def main():
 
         # Load the data from Excel into a DataFrame
         #df = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Scholarship Final.xlsx")
-        obj = s3.Bucket('vsdatateamtest1').Object('Scholarship.xlsx').get()
-        df = pd.read_excel(io.BytesIO(obj['Body'].read()), index_col=0)
+        bucket_name = 'vsdatateamtest1'
+        object_key = 'Scholarship.xlsx'
+
+        s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
+        obj = s3.get_object(Bucket=bucket_name, Key=object_key)
+        data = obj['Body'].read()
+        df = pd.read_excel(io.BytesIO(data))
 
         # Filter the DataFrame to only include rows where Field is 'Science'
         df_science = df[df['Field'] == 'Science']
