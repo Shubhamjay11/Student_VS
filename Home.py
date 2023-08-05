@@ -4,7 +4,7 @@ from streamlit_option_menu import option_menu
 import Job12  # Import the Job12 module
 
 # Move the call to st.set_page_config to the beginning of the script
-st.set_page_config(layout="wide")
+#st.set_page_config(layout="wide")
 
 import boto3
 import io
