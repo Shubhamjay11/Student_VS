@@ -12,6 +12,8 @@ import streamlit as st
 
 
 class PDF(FPDF,HTMLMixin):
+
+    
     def __init__(self, width, height):
         super().__init__('P', 'mm', (width, height))
         self.width = width
@@ -19,7 +21,7 @@ class PDF(FPDF,HTMLMixin):
 
     def header(self):
         # Load the original image
-        bg_image = Image.open("assets/Watermark.jpeg")
+        bg_image = load_image_from_s3(bucket_name, 'Watermark.jpeg')
 
         # Set the background image as the page background
         temp_bg_file = tempfile.mktemp(suffix=".jpeg")
@@ -27,7 +29,7 @@ class PDF(FPDF,HTMLMixin):
         self.image(temp_bg_file, x=50, y=50, w=self.width/2, h=self.height/2)
 
         # Load the logo
-        logo = Image.open("assets/logo.jpeg")
+        logo = load_image_from_s3(bucket_name, 'logo.jpeg')
 
         # Save the logo to a temporary file
         temp_logo_file = tempfile.mktemp(suffix=".jpeg")
@@ -245,6 +247,14 @@ def load_sco_details():
     obj = s3.get_object(Bucket=bucket_name, Key=object_key_scholarship)
     data = obj['Body'].read()
     return pd.read_excel(io.BytesIO(data))
+
+def load_image_from_s3(bucket_name, object_key):
+    obj = s3.get_object(Bucket=bucket_name, Key=object_key)
+    data = obj['Body'].read()
+    return Image.open(BytesIO(data))
+
+
+
 
 
 dp = load_job_details()
