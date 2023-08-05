@@ -1,15 +1,12 @@
-import pandas as pd
-import boto3
-import streamlit as st
-from fpdf import FPDF
-from fpdf import FPDF, HTMLMixin
-import base64
+import io
 import tempfile
-from PIL import Image
+from io import BytesIO
+from fpdf import FPDF, HTMLMixin
+from PIL import Image 
 
 import boto3
-import io
 import pandas as pd
+import streamlit as st
 
 
 
@@ -232,12 +229,25 @@ def add_detail(self, detail, separator="\n"):
 aws_id = 'AKIA4T5JWBQCSPOKA6MX'
 aws_secret = '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'
 bucket_name = 'vsdatateamtest1'
-object_key = 'Job.xlsx'
+object_key_job = 'Job.xlsx' 
+object_key_scholarship = 'Scholarship.xlsx'
 
 s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
-obj = s3.get_object(Bucket=bucket_name, Key=object_key)
-data = obj['Body'].read()
-dp = pd.read_excel(io.BytesIO(data))
+
+
+@st.cache_resource
+def load_job_details():
+    obj = s3.get_object(Bucket=bucket_name, Key=object_key_job)
+    data = obj['Body'].read()
+    return pd.read_excel(io.BytesIO(data))
+
+def load_sco_details():
+    obj = s3.get_object(Bucket=bucket_name, Key=object_key_scholarship)
+    data = obj['Body'].read()
+    return pd.read_excel(io.BytesIO(data))
+
+
+dp = load_job_details()
 
 @st.cache_resource
 def load_job_details(selected_field):
@@ -300,13 +310,7 @@ def main():
 
         # Load the data from Excel into a DataFrame
         #df = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Scholarship Final.xlsx")
-        bucket_name = 'vsdatateamtest1'
-        object_key = 'Scholarship.xlsx'
-
-        s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
-        obj = s3.get_object(Bucket=bucket_name, Key=object_key)
-        data = obj['Body'].read()
-        df = pd.read_excel(io.BytesIO(data))
+        df = load_sco_details()
 
         # Filter the DataFrame to only include rows where Field is 'Science'
         df_science = df[df['Field'] == 'Science']
