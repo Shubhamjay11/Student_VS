@@ -3,23 +3,22 @@ import tempfile
 from io import BytesIO
 from fpdf import FPDF, HTMLMixin
 from PIL import Image 
-
 import boto3
 import pandas as pd
 import streamlit as st
 
 
 
-
 class PDF(FPDF,HTMLMixin):
-
-    
     def __init__(self, width, height):
         super().__init__('P', 'mm', (width, height))
         self.width = width
         self.height = height
 
     def header(self):
+         # Reset the text color to black before adding the header
+        self.set_text_color(0, 0, 0)
+        
         # Load the original image
         bg_image = load_image_from_s3(bucket_name, 'Watermark.jpeg')
 
@@ -45,7 +44,23 @@ class PDF(FPDF,HTMLMixin):
         self.set_font('Arial', 'B', 12)
         self.cell(0, 10, 'Career Exploration Report', 0, 1, 'C')
         self.cell(0, 10, '', 0, 1, 'C')
-      
+        
+    
+    def add_title(self, title):
+        self.set_font('Arial', 'B', 16)
+        self.cell(0, 10, title, 0, 1, 'C')
+        self.cell(0, 10, '', 0, 1, 'C')
+       
+
+    def add_college_details_title(self):
+        self.add_title('College Details Report')
+
+    def add_job_details_title(self):
+        self.add_title('Job Details Report')
+
+    def add_scholarship_details_title(self):
+        self.add_title('Scholarship Details Report')
+    
 
     def chapter_title(self, title):
         self.set_font('Arial', 'B', 12)
@@ -111,6 +126,10 @@ class PDF(FPDF,HTMLMixin):
 
         self.set_font('Arial', 'B', 12)
 
+        # Ensure the column names have the same number of elements as col_widths
+        assert len(column_names) == len(col_widths)
+
+
         for name, width in zip(column_names, col_widths):
             self.cell(width, 10, str(name), 1, 0, 'C')
         self.ln()
@@ -118,15 +137,19 @@ class PDF(FPDF,HTMLMixin):
         self.set_font('Arial', '', 10)
 
         for row in data:
+            assert len(row) == len(col_widths)
             for item, width in zip(row, col_widths):
                 self.cell(width, 8, str(item).encode('latin-1', 'replace').decode('latin-1'), 1, 0, 'C')
             self.ln()
 
     def add_scholarship_duration_table(self, data):
         column_names = ['Duration', 'Award amount', 'Application deadline']
-        col_widths = [50, 50, 50]
+        col_widths = [60, 40, 60]
 
         self.set_font('Arial', 'B', 12)
+
+        assert len(column_names) == len(col_widths)
+
 
         for name, width in zip(column_names, col_widths):
             self.cell(width, 10, str(name), 1, 0, 'C')
@@ -143,6 +166,10 @@ class PDF(FPDF,HTMLMixin):
         # Set font for scholarship details content
         self.set_font('Arial', '', 12)
 
+        # Define the width for the keys and values
+        key_width = 60
+        value_width = self.w - key_width - self.r_margin - self.l_margin
+
         # Loop through scholarship details and add them to the PDF
         for key, value in details.items():
             # Convert the key and value to strings using 'utf-8' encoding
@@ -157,36 +184,25 @@ class PDF(FPDF,HTMLMixin):
 
             # Set font to bold for the ':' (content separator)
             self.set_font('Arial', 'B', 12)
-            self.cell(self.get_string_width(content[:separator_index]), 8, content[:separator_index], ln=False)
+            self.cell(key_width, 8, txt=content[:separator_index], ln=False)
 
             # Reset font back to normal for the value
             self.set_font('Arial', '', 12)
-            #self.cell(0, 8, content[separator_index:], ln=True)
 
-            # Calculate available width for the value
-            value_width = self.w - self.get_string_width(content[:separator_index]) - self.r_margin - self.l_margin
-
-             # Check if the value is a contact website (assuming it contains "http")
+            # Check if the value is a contact website (assuming it contains "http")
             if "http" in value:
-            # Set the text color to blue
+                # Set the text color to blue
                 self.set_text_color(0, 0, 255)
-            
+
             # Check if the value fits within the available width
-                if self.get_string_width(content[separator_index:]) <= value_width:
-                    self.cell(0, 8, content[separator_index:], ln=True)
-                else:
+            if self.get_string_width(content[separator_index:]) <= value_width:
+                self.cell(value_width, 8, txt=content[separator_index:], ln=True)
+            else:
                 # If the value does not fit, use multi_cell to wrap it
-                    self.multi_cell(0, 8, content[separator_index:], align='L')
+                self.multi_cell(value_width, 8, txt=content[separator_index:], align='L')
 
             # Reset text color back to black
-                self.set_text_color(0, 0, 0)
-            else:
-            # If it's not a contact website, display normally
-                if self.get_string_width(content[separator_index:]) <= value_width:
-                    self.cell(0, 8, content[separator_index:], ln=True)
-                else:
-                # If the value does not fit, use multi_cell to wrap it
-                    self.multi_cell(0, 8, content[separator_index:], align='L')
+            self.set_text_color(0, 0, 0)
 
         self.ln()
 
@@ -225,14 +241,11 @@ def add_detail(self, detail, separator="\n"):
 
     
 # Load the Excel file into a pandas DataFrame
-#dp = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Job Final.xlsx")
-#dp.head()
-
 aws_id = 'AKIA4T5JWBQCSPOKA6MX'
 aws_secret = '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'
 bucket_name = 'vsdatateamtest1'
 object_key_job = 'Job.xlsx' 
-object_key_scholarship = 'Scholarship.xlsx'
+object_key_scholarship = 'Scholarship _1.xlsx'
 
 s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
 
@@ -254,12 +267,8 @@ def load_image_from_s3(bucket_name, object_key):
     return Image.open(BytesIO(data))
 
 
-
-
-
 dp = load_job_details()
 
-@st.cache_resource
 def load_job_details(selected_field):
     filtered_job_titles = dp[dp['Field'] == selected_field]['Job Titles'].unique()
     return filtered_job_titles
@@ -319,7 +328,6 @@ def main():
         st.markdown(f"**Probable Employers:** {job_details['Probable Employers'].values[0]}")
 
         # Load the data from Excel into a DataFrame
-        #df = pd.read_excel(r"C:\Users\spjay\Desktop\VigyanShaala\GUI CLG\Final Data\Scholarship Final.xlsx")
         df = load_sco_details()
 
         # Filter the DataFrame to only include rows where Field is 'Science'
@@ -339,7 +347,7 @@ def main():
         pdf.set_font("Arial", "B", 14)
 
         # Add title
-        pdf.cell(200, 10, txt="College Details Report", ln=True, align="C")
+        pdf.add_college_details_title()
 
         # Add content
         college_content = [
@@ -368,11 +376,15 @@ def main():
             line_cleaned = line.encode('latin-1', 'replace').decode('latin-1')
             add_detail(pdf, line_cleaned)
 
+        # Draw a separator line after college content
+        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        pdf.ln(10) # Add space after the separator line
+
          # Set font 
         pdf.set_font("Arial", "B", 14)
 
         # Add title
-        pdf.cell(200, 10, txt="Job Details Report", ln=True, align="C")
+        pdf.add_job_details_title()
 
         # Add content
         job_content = [
@@ -393,12 +405,15 @@ def main():
             line_cleaned = line.encode('latin-1', 'replace').decode('latin-1')
             add_detail(pdf, line_cleaned)
             
+        # Draw a separator line after job content
+        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        pdf.ln(10)
+            
         # Set font for the "Scholarship Details" section to bold
         pdf.set_font("Arial", "B", 14)
 
         # Add a cell
-        pdf.cell(200, 10, txt = "Scholarship Details Report", ln = True, align = 'C')
-   
+        pdf.add_scholarship_details_title()
         # Set font for the scholarship details content
         pdf.set_font("Arial", "", 12)
         
