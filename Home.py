@@ -1,14 +1,10 @@
 import pandas as pd
 import streamlit as st
+import boto3
+import io
 from streamlit_option_menu import option_menu
 import Job12  # Import the Job12 module
 
-# Move the call to st.set_page_config to the beginning of the script
-#st.set_page_config(layout="wide")
-
-import boto3
-import io
-import pandas as pd
 
 aws_id = 'AKIA4T5JWBQCSPOKA6MX'
 aws_secret = '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'
@@ -19,9 +15,6 @@ s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secr
 obj = s3.get_object(Bucket=bucket_name, Key=object_key)
 data = obj['Body'].read()
 df = pd.read_excel(io.BytesIO(data))
-print(df)
-
-df.head()
 
 # Define the Streamlit interface
 def main():
