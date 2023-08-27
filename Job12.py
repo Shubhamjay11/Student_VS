@@ -8,7 +8,6 @@ import pandas as pd
 import streamlit as st
 
 
-
 class PDF(FPDF,HTMLMixin):
     def __init__(self, width, height):
         super().__init__('P', 'mm', (width, height))
@@ -85,8 +84,15 @@ class PDF(FPDF,HTMLMixin):
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
+        
+        # Set the text color to black before adding page numbers
+        self.set_text_color(0, 0, 0)
+        
         self.cell(0, 10, 'Page %s' % self.page_no(), 0, 0, 'C')
 
+        # Reset text color to black
+        self.set_text_color(0, 0, 0)
+        
     def add_bold_text(self, text):
         self.set_font('Arial', 'B', 12)
         line_height = 5  # Set the desired interline spacing
@@ -122,7 +128,7 @@ class PDF(FPDF,HTMLMixin):
 
     def add_scholarship_offered_by_table(self, data):
         column_names = ['Offered by', 'Govt./Private', 'For study in']
-        col_widths = [60, 40, 60]
+        col_widths = [70, 40, 60]
 
         self.set_font('Arial', 'B', 12)
 
@@ -144,7 +150,7 @@ class PDF(FPDF,HTMLMixin):
 
     def add_scholarship_duration_table(self, data):
         column_names = ['Duration', 'Award amount', 'Application deadline']
-        col_widths = [60, 40, 60]
+        col_widths = [70, 40, 60]
 
         self.set_font('Arial', 'B', 12)
 
@@ -170,39 +176,57 @@ class PDF(FPDF,HTMLMixin):
         key_width = 60
         value_width = self.w - key_width - self.r_margin - self.l_margin
 
+        # Define the space after the colon for value
+        colon_space = 4  # Adjust this value as needed
+        
         # Loop through scholarship details and add them to the PDF
         for key, value in details.items():
             # Convert the key and value to strings using 'utf-8' encoding
             key_str = str(key).encode('latin-1', 'replace').decode('latin-1')
             value_str = str(value).encode('latin-1', 'replace').decode('latin-1')
 
-            # Concatenate the key and value
-            content = f"{key_str}: {value_str}"
-
-            # Find the index of ':' to make it bold
-            separator_index = content.index(':')
-
-            # Set font to bold for the ':' (content separator)
-            self.set_font('Arial', 'B', 12)
-            self.cell(key_width, 8, txt=content[:separator_index], ln=False)
-
-            # Reset font back to normal for the value
-            self.set_font('Arial', '', 12)
-
-            # Check if the value is a contact website (assuming it contains "http")
-            if "http" in value:
+                
+        # Calculate the combined width of key and value
+            # Calculate the width of the key without considering value or colon
+            key_colon_width = self.get_string_width(key_str + ": ")
+        
+        # Check if the combined width fits within the available width
+            if key_colon_width + self.get_string_width(value_str) <= value_width:
+            # Set font to bold for the key
+                self.set_font('Arial', 'B', 12)
+                # Print the key in bold
+                self.cell(key_colon_width, 8, txt=f"{key_str}:", ln=False)
+            # Reset font to regular for the value
+                self.set_font('Arial', '', 12)
+                
+                # Check if the value is a URL
+                if "http" in value:
                 # Set the text color to blue
-                self.set_text_color(0, 0, 255)
-
-            # Check if the value fits within the available width
-            if self.get_string_width(content[separator_index:]) <= value_width:
-                self.cell(value_width, 8, txt=content[separator_index:], ln=True)
+                    self.set_text_color(0, 0, 255)
+                    
+                # Print the wrapped value
+                self.cell(colon_space)  # Add the desired space after the colon
+                self.cell(0, 8, txt=value_str, ln=True)
+                # Reset text color to black
+                self.set_text_color(0, 0, 0)
             else:
-                # If the value does not fit, use multi_cell to wrap it
-                self.multi_cell(value_width, 8, txt=content[separator_index:], align='L')
+                # Set font to bold for the key
+                self.set_font('Arial', 'B', 12)
+                # Print the key in bold with a colon
+                self.cell(0, 8, txt=f"{key_str}:", ln=True)
 
-            # Reset text color back to black
-            self.set_text_color(0, 0, 0)
+                # Reset font back to normal for the value
+                self.set_font('Arial', '', 12)
+
+                # Print wrapped value
+                # Check if the value is a URL
+                if "http" in value:
+                # Set the text color to blue
+                    self.set_text_color(0, 0, 255)
+            # Print the wrapped value
+                self.multi_cell(self.w - self.r_margin - self.l_margin, 8, txt=value_str, align='L')
+            # Reset text color to black
+                self.set_text_color(0, 0, 0)
 
         self.ln()
 
@@ -214,43 +238,78 @@ def add_detail(self, detail, separator="\n"):
     # Split into column name and value
     column_name, value = detail.split(": ", 1)
 
-    # Print column name
-    self.set_font('Arial', 'B', 12)
-    self.cell(70, 10, txt=column_name + ":", ln=0)
+    # Remove leading and trailing whitespace from the value
+    value = value.strip()
 
-    # Calculate value position
-    value_x = self.get_x() + 1
-
-    # Print value
-    self.set_font('Arial', '', 12)
-    value_width = self.w - value_x - self.r_margin
-    self.set_x(value_x)
+    # Replace newline characters with spaces in the value
+    value = value.replace("\n", " ")
 
     # Check for URL and set color
-    if "http" in value:
-        self.set_text_color(0, 0, 255)
+    url_detected = "http" in value or "www." in value
 
-    self.multi_cell(value_width, 7, txt=value, align='L')  # Adjust line_height to reduce interline spacing
+    # Set font for column name (bold) and value (regular)
+    self.set_font('Arial', 'B', 12)
 
-    # Reset text color
-    self.set_text_color(0, 0, 0)
+    # Calculate width for the value
+    value_width = self.w - self.l_margin - self.r_margin
+
+    # Check if the value is longer than the available space
+    if self.get_string_width(column_name) + self.get_string_width(": ") + self.get_string_width(value) <= value_width:
+        # Print column name
+        self.cell(self.get_string_width(column_name) + self.get_string_width(": "), 7, txt=column_name + ": ", ln=False)
+
+        # Print value
+        self.set_font('Arial', '', 12)
+        
+        # Set text color to blue if URL is detected
+        if url_detected:
+            self.set_text_color(0, 0, 255)  # Set text color to blue
+        
+        self.multi_cell(value_width - self.get_string_width(column_name) - self.get_string_width(": "), 7, txt=value, align='L')
+        
+        # Reset text color to black
+        self.set_text_color(0, 0, 0)
+    else:
+        # Print concatenated column name and value with a 2-space gap
+        column_value = f"{column_name}:  "
+        self.cell(0, 7, txt=column_value, ln=True)
+
+        # Reset font to regular for value
+        self.set_font('Arial', '', 12)
+
+        # Split multi-line value into individual lines
+        lines = value.split('\n')
+
+        for line in lines:
+            # Check for URL and set color
+            url_detected = "http" in line or "www." in line
+            
+            if url_detected:
+                self.set_text_color(0, 0, 255)  # Set text color to blue
+
+        # Print value
+            self.multi_cell(value_width, 7, txt=value, align='L')  # Adjust line_height as needed
+
+        # Reset text color to black
+        self.set_text_color(0, 0, 0)
 
     # Add the custom separator after each detail
     self.set_font('Arial', '', 5)  # Adjust font size for the separator
     self.cell(0, 2, separator, ln=True)
 
-    
+# Load the Excel file into a pandas DataFrame
 # Load the Excel file into a pandas DataFrame
 aws_id = 'AKIA4T5JWBQCSPOKA6MX'
 aws_secret = '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'
-bucket_name = 'vsdatateamtest1'
+bucket_name = 'vsdatateam'
 object_key_job = 'Job.xlsx' 
-object_key_scholarship = 'Scholarship _1.xlsx'
+object_key_scholarship = 'Scholarship.xlsx'
 
 s3 = boto3.client('s3', aws_access_key_id=aws_id, aws_secret_access_key=aws_secret)
 
 
 @st.cache_resource
+
 def load_job_details():
     obj = s3.get_object(Bucket=bucket_name, Key=object_key_job)
     data = obj['Body'].read()
@@ -266,9 +325,12 @@ def load_image_from_s3(bucket_name, object_key):
     data = obj['Body'].read()
     return Image.open(BytesIO(data))
 
-
+#dp = pd.read_excel("Job.xlsx")
 dp = load_job_details()
 
+dp.head()
+
+@st.cache_resource
 def load_job_details(selected_field):
     filtered_job_titles = dp[dp['Field'] == selected_field]['Job Titles'].unique()
     return filtered_job_titles
@@ -287,13 +349,13 @@ def main():
     filtered_job_titles = load_job_details(selected_field)
 
     if len(filtered_job_titles) == 0:
-        st.error(f"No job titles found for the selected field: {selected_field}")
-        st.error("Please choose a different field and job title below:")
+        st.error(f"No job titles found for the selected field: **{selected_field}**")
+        st.error("*Please choose a different field and job title below:*")
 
         fields = sorted(list(dp['Field'].unique()))  # Sort the fields
         fields.insert(0, 'Select a field')  # Add a default option
 
-        selected_field = st.selectbox('Select Field', fields)
+        selected_field = st.selectbox('**Select Field**', fields)
         if selected_field == 'Select a field':
             st.warning("Please select a field.")
             return
@@ -308,9 +370,9 @@ def main():
         else:
             filtered_job_titles = sorted(filtered_job_titles)  # Sort the job titles
 
-        selected_job_title = st.selectbox('Select Job Title', filtered_job_titles)
+        selected_job_title = st.selectbox('**Select Job Title**', filtered_job_titles)
     else:
-        selected_job_title = st.selectbox('Select Job Title', sorted(filtered_job_titles))  # Sort the job titles
+        selected_job_title = st.selectbox('**Select Job Title**', sorted(filtered_job_titles))  # Sort the job titles
 
     if selected_job_title:
         job_details = dp[(dp['Field'] == selected_field) & (dp['Job Titles'] == selected_job_title)]
@@ -318,7 +380,6 @@ def main():
         st.header('Job Details')
         st.markdown(f"**Field:** {selected_field}")
         st.markdown(f"**Job Title:** {selected_job_title}")
-        st.markdown(f"**SubField:** {job_details['SubField'].values[0]}")
         st.markdown(f"**Job Description:** {job_details['Job Description'].values[0]}")
         st.markdown(f"**Work Environment:** {job_details['Work Environment'].values[0]}")
         st.markdown(f"**Key Competancy:** {job_details['Key Competancy'].values[0]}")
@@ -328,13 +389,17 @@ def main():
         st.markdown(f"**Probable Employers:** {job_details['Probable Employers'].values[0]}")
 
         # Load the data from Excel into a DataFrame
-        df = load_sco_details()
+        df= load_sco_details()
+        #df = pd.read_excel("Scholarship.xlsx")
 
         # Filter the DataFrame to only include rows where Field is 'Science'
         df_science = df[df['Field'] == 'Science']
 
         # Filter the DataFrame for the selected field
         df_selected = df[df['Field'] == selected_field]
+
+        # Concatenate the df_science and df_selected DataFrames
+        df_concat = pd.concat([df_science, df_selected])
 
         # Create a PDF object
         pdf = PDF(210, 297)
@@ -367,7 +432,8 @@ def main():
             f"Application Fee: {st.session_state.college_details['APPLICATION FEE'].values[0]}",
             f"Selection Process: {st.session_state.college_details['SELECTION PROCESS'].values[0]}",
             f"Intake: {st.session_state.college_details['INTAKE'].values[0]}",
-            f"Link: {st.session_state.college_details['LINK'].values[0]}"
+            f"Link: {st.session_state.college_details['LINK'].values[0]}",
+            f"Scholarships/Fellowships: {st.session_state.college_details['Scholarships/Fellowships'].values[0]}"
         ]
 
        # Add college content to the PDF
@@ -412,45 +478,56 @@ def main():
         # Set font for the "Scholarship Details" section to bold
         pdf.set_font("Arial", "B", 14)
 
-        # Add a cell
-        pdf.add_scholarship_details_title()
-        # Set font for the scholarship details content
-        pdf.set_font("Arial", "", 12)
+        # Initialize a flag to check if the scholarship details title has been printed
+        printed_title = False
         
         # Group scholarship details by 'Scholarship Name' and loop through each group
-        grouped_scholarships = df_science.groupby('Scholarship Name')
+        grouped_scholarships = df_concat.groupby('Scholarship Name')
         bullet_counter = 1  # Initialize the bullet counter
         
         for scholarship_name, scholarship_group in grouped_scholarships:
-            # Add scholarship name with bullet point to the PDF
-            pdf.cell(5, 8, txt=f"{bullet_counter}.", ln=False)
-            pdf.add_bold_text(f"Scholarship Name: {scholarship_name}")
-        
-            # Add scholarship tables to the PDF
-            pdf.add_scholarship_offered_by_table(scholarship_group[['Offered by', 'Govt./Private', 'For study in']].values)
-            pdf.add_scholarship_duration_table(scholarship_group[['Duration', 'Award amount', 'Application deadline']].values)
+            # Check if the selected degree matches the degree in the scholarship details
+            if st.session_state.selected_degree == 'Masters':
+
+                # Only add the scholarship details title once
+                if not printed_title:
+                    pdf.add_scholarship_details_title()
+                    printed_title = True
+                    
+                # Add scholarship name with bullet point to the PDF
+                bullet_text = f"{bullet_counter}. Scholarship Name: {scholarship_name}"
+                pdf.add_bold_text(bullet_text)
             
-            # Create a dictionary with scholarship details for printing
-            scholarship_details = scholarship_group.iloc[0].to_dict()            
-            scholarship_details.pop('Degree', None)
-            scholarship_details.pop('Field', None)
-            scholarship_details.pop('Subfield', None)
-            scholarship_details.pop('Scholarship Name', None)
-            scholarship_details.pop('Offered by', None)
-            scholarship_details.pop('Govt./Private', None)
-            scholarship_details.pop('For study in', None)
-            scholarship_details.pop('Duration', None)
-            scholarship_details.pop('Award amount', None)
-            scholarship_details.pop('Application deadline', None)
+                # Add scholarship tables to the PDF
+                pdf.add_scholarship_offered_by_table(scholarship_group[['Offered by', 'Govt./Private', 'For study in']].values)
+                pdf.add_scholarship_duration_table(scholarship_group[['Duration', 'Award amount', 'Application deadline']].values)
+            
+                # Add a gap after the scholarship table
+                pdf.ln(5)  # Adjust the gap size as needed
 
-    # Add scholarship details to the PDF
-            pdf.add_scholarship_details(scholarship_name, scholarship_details)
+                # Create a dictionary with scholarship details for printing
+                scholarship_details = scholarship_group.iloc[0].to_dict()
+                scholarship_details.pop('Degree', None)
+                scholarship_details.pop('Field', None)
+                scholarship_details.pop('Subfield', None)
+                scholarship_details.pop('Scholarship Name', None)
+                scholarship_details.pop('Offered by', None)
+                scholarship_details.pop('Govt./Private', None)
+                scholarship_details.pop('For study in', None)
+                scholarship_details.pop('Duration', None)
+                scholarship_details.pop('Award amount', None)
+                scholarship_details.pop('Application deadline', None)
 
-        # Additional space after scholarship details
-            pdf.ln()
-        
-        # Increment the bullet counter for the next scholarship
-            bullet_counter += 1
+                # Add scholarship details to the PDF
+                pdf.add_scholarship_details(scholarship_name, scholarship_details)
+
+                # Additional space after scholarship details
+                pdf.ln(5)
+
+                # Increment the bullet counter for the next scholarship
+                bullet_counter += 1
+                
+            
        
         # Save the pdf with name .pdf
         pdf_output = pdf.output(dest="S").encode("latin1")
