@@ -360,7 +360,7 @@ def main():
             st.warning("Please select a field.")
             return
 
-        st.session_state.selected_field = selected_field
+        #st.session_state.selected_field = selected_field
 
         filtered_job_titles = load_job_details(selected_field)
         
@@ -382,11 +382,14 @@ def main():
         st.markdown(f"**Job Title:** {selected_job_title}")
         st.markdown(f"**Job Description:** {job_details['Job Description'].values[0]}")
         st.markdown(f"**Work Environment:** {job_details['Work Environment'].values[0]}")
-        st.markdown(f"**Key Competancy:** {job_details['Key Competancy'].values[0]}")
+        st.markdown(f"**Women Role Models:** {job_details['Women Role Models'].values[0]}")
+        st.markdown(f"**Key Competency:** {job_details['Key Competancy'].values[0]}")
         st.markdown(f"**Available Skill Training Schemes:** {job_details['Available skill training schemes'].values[0]}")
         st.markdown(f"**Sample Training & Courses:** {job_details['Sample training & courses'].values[0]}")
         st.markdown(f"**Career Path Progression:** {job_details['Career path progression'].values[0]}")
         st.markdown(f"**Probable Employers:** {job_details['Probable Employers'].values[0]}")
+        st.markdown(f"**Salary:** {job_details['Salary'].values[0]}")
+        
 
         # Load the data from Excel into a DataFrame
         df= load_sco_details()
@@ -433,7 +436,7 @@ def main():
             f"Selection Process: {st.session_state.college_details['SELECTION PROCESS'].values[0]}",
             f"Intake: {st.session_state.college_details['INTAKE'].values[0]}",
             f"Link: {st.session_state.college_details['LINK'].values[0]}",
-            f"Scholarships/Fellowships: {st.session_state.college_details['Scholarships/Fellowships'].values[0]}"
+            f"Scholarships for this College: {st.session_state.college_details['Scholarships/Fellowships'].values[0]}"
         ]
 
        # Add college content to the PDF
@@ -457,11 +460,13 @@ def main():
             f"Job Title: {selected_job_title}",
             f"Job Description: {job_details['Job Description'].values[0]}",
             f"Work Environment: {job_details['Work Environment'].values[0]}",
+            f"Women Role Models: {job_details['Women Role Models'].values[0]}",
             f"Key Competancy: {job_details['Key Competancy'].values[0]}",
             f"Available Skill Training Schemes: {job_details['Available skill training schemes'].values[0]}",
             f"Sample Training & Courses: {job_details['Sample training & courses'].values[0]}",
             f"Career Path Progression: {job_details['Career path progression'].values[0]}",
             f"Probable Employers: {job_details['Probable Employers'].values[0]}",
+            f"Salary: {job_details['Salary'].values[0]}"
         ]
 
 
