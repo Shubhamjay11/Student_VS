@@ -56,7 +56,7 @@ def main():
     # Check if 'student_name' is empty and display a warning
     if st.session_state.student_name == '':
         st.warning('*Please enter a valid name.*')
-    degree_order = ['Bachelors', 'Intergrated Bachelors + Masters', 'Masters', 'Intergrated Masters + PhD', 'PhD']
+    degree_order = ['Bachelors', 'Integrated Bachelors + Masters', 'Masters', 'Integrated Masters + PhD', 'PhD']
     st.session_state.qualified_degrees = sorted([i for i in df['Degree'].unique() if isinstance(i, str)], key=lambda x: degree_order.index(x))
     st.session_state.selected_degree = st.selectbox('**Select the Degree you want to pursue next (Your Aspiration Degree)**', st.session_state.qualified_degrees)
 
