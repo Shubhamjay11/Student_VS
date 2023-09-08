@@ -382,7 +382,7 @@ def main():
         st.markdown(f"**Job Title:** {selected_job_title}")
         st.markdown(f"**Job Description:** {job_details['Job Description'].values[0]}")
         st.markdown(f"**Work Environment:** {job_details['Work Environment'].values[0]}")
-        st.markdown(f"**Women Role Models:** {job_details['Women Role Models'].values[0]}")
+        st.markdown(f"**Women Role Models**: {st.session_state.college_details['Women role models'].values[0]}")
         st.markdown(f"**Key Competency:** {job_details['Key Competancy'].values[0]}")
         st.markdown(f"**Available Skill Training Schemes:** {job_details['Available skill training schemes'].values[0]}")
         st.markdown(f"**Sample Training & Courses:** {job_details['Sample training & courses'].values[0]}")
@@ -460,7 +460,7 @@ def main():
             f"Job Title: {selected_job_title}",
             f"Job Description: {job_details['Job Description'].values[0]}",
             f"Work Environment: {job_details['Work Environment'].values[0]}",
-            f"Women Role Models: {job_details['Women Role Models'].values[0]}",
+            f"Women Role Models: {st.session_state.college_details['Women role models'].values[0]}"
             f"Key Competancy: {job_details['Key Competancy'].values[0]}",
             f"Available Skill Training Schemes: {job_details['Available skill training schemes'].values[0]}",
             f"Sample Training & Courses: {job_details['Sample training & courses'].values[0]}",
